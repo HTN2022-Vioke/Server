@@ -82,6 +82,6 @@ def getOffVocalWaveformArr(filepath, sample_rate): # has to be wav
 
 # test code
 # start = datetime.datetime.now()
-# createOffVocal("let_it_go.mp3", "ligoff.wav")
+# createOffVocal("let_it_go.mp3", "let_it_go_off_vocal.wav")
 # end = datetime.datetime.now()
 # print("duration: " + str(end-start))
