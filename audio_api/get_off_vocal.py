@@ -80,7 +80,8 @@ def getOffVocalWaveformArr(filepath, sample_rate): # has to be wav
   prediction = SEPARATOR.separate(waveform)
   return prediction["accompaniment"]
 
-start = datetime.datetime.now()
-createOffVocal("let_it_go.mp3", "ligoff.wav")
-end = datetime.datetime.now()
-print("duration: " + str(end-start))
+# test code
+# start = datetime.datetime.now()
+# createOffVocal("let_it_go.mp3", "ligoff.wav")
+# end = datetime.datetime.now()
+# print("duration: " + str(end-start))
