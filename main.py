@@ -1,7 +1,7 @@
 from audio_api import get_off_vocal, pitch_shift
-from fastapi import FastAPI, Form, UploadFile
+from audio_api.utils import createWavFromMp3
+from fastapi import FastAPI, UploadFile
 import aiofiles
-# from audio_api.utils import createWavFromMp3
 
 # right now, we're assuming all uploads are mp3
 
@@ -32,20 +32,18 @@ async def root():
 
 @app.post("/get-off-vocal/")
 async def getOffVocal(file: UploadFile): # assume mp3
-  # store to local
+  # store mp3 file to uploads folder
   filename = file.filename
   filepath = "{dir}/{filename}".format(dir = UPLOAD_ROOT_PATH, filename = filename)
   async with aiofiles.open(filepath, 'wb') as out:
     content = await file.read()  # async read
     await out.write(content)  # async write
 
-  song_name = filename
+  song_name = filename[:len(filename)-3]
+
   # create wav
-  filepath_on_vocal = "{dir1}/{dir2}/{filename}".format(
-    dir1 = OUTPUT_ROOT_PATH,
-    dir2 = song_name,
-    filename = song_name + AUDIO_FILE_EXTENSION
-  )
+  wav_dir = "{dir1}/{dir2}".format(dir1 = OUTPUT_ROOT_PATH, dir2 = song_name)
+  wav_path = createWavFromMp3(filename, UPLOAD_ROOT_PATH, wav_dir)
 
   # create off vocal
   filepath_off_vocal = "{dir1}/{dir2}/{filename}".format(
@@ -53,12 +51,13 @@ async def getOffVocal(file: UploadFile): # assume mp3
     dir2 = filename,
     filename = file.filename[:len(filename)-4] + AUDIO_FILE_EXTENSION
   )
-  get_off_vocal.createOffVocal(filepath, filepath_off_vocal) # assuming original input is always mp3
+  get_off_vocal.createOffVocal(wav_dir, filepath_off_vocal) # needs wav
 
   return {
-    ON_VOCAL_RETURN_KEY_NAME: filepath_on_vocal,
+    ON_VOCAL_RETURN_KEY_NAME: wav_path,
     OFF_VOCAL_RETURN_KEY_NAME: filepath_off_vocal
   }
+
 
 @app.post("/get-shifted-audio/")
 async def getShiftedAudio(original_filename: str, shift_semitones: int):
