@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import aiofiles
 import os
 from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
 # right now, we're assuming all uploads are mp3
 
@@ -23,16 +24,22 @@ class GetShiftedAudioRequest(BaseModel):
   wav_path: str
   shift_semitones: int    # positive for higher pitch, negative for lower
 
-AUDIO_FILE_EXTENSION = ".wav"
-OFF_VOCAL_RETURN_KEY_NAME = "audioNvUrl"
-OFF_VOCAL_SUFFIX = "_off_vocal"
-ON_VOCAL_RETURN_KEY_NAME = "audioUrl"
+UPLOAD_ROOT_PATH = "uploads"
 OUTPUT_ROOT_PATH = "outputs"
+
 SHIFT_DIRECTORY = "shifted"
 TEMP_DIRECTORY = "temp"
-UPLOAD_ROOT_PATH = "uploads"
+
+AUDIO_FILE_EXTENSION = ".wav"
+OFF_VOCAL_SUFFIX = "_off_vocal"
+ON_VOCAL_RETURN_KEY_NAME = "audioUrl"
+OFF_VOCAL_RETURN_KEY_NAME = "audioNvUrl"
+
 
 app = FastAPI()
+
+app.mount("/outputs", StaticFiles(directory="outputs"), name="outputs")
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 origins = ["*"]
 
@@ -57,13 +64,19 @@ def createDirIfNotExists(path):
 async def root():
   return {"message": "home"}
 
+# @app.get("/outputs")
+# async def getOutputs():
+#   path = "outputs/let_it_go/let_it_go.wav"
+#   f = open(path, mode="rb")
+#   headers = {"Content-Length": str(os.path.getsize(path)), "Content-Type": "audio/wav"}
+#   return Response(f.read(), headers=headers)
+
 @app.post("/get-off-vocal/")
 async def getOffVocal(file: UploadFile): # assume mp3
   validateDirectories()
   # store mp3 file to uploads folder
   filename = file.filename
   filepath = "{dir}/{filename}".format(dir = UPLOAD_ROOT_PATH, filename = filename)
-  createDirIfNotExists(filepath)
   async with aiofiles.open(filepath, 'wb') as out:
     content = await file.read()  # async read
     await out.write(content)  # async write
@@ -83,8 +96,8 @@ async def getOffVocal(file: UploadFile): # assume mp3
   get_off_vocal.createOffVocal(wav_path, filepath_off_vocal) # needs wav
 
   return {
-    ON_VOCAL_RETURN_KEY_NAME: wav_path,
-    OFF_VOCAL_RETURN_KEY_NAME: filepath_off_vocal
+    ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+    OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
   }
 
 
@@ -92,7 +105,7 @@ async def getOffVocal(file: UploadFile): # assume mp3
 async def getShiftedAudio(request: GetShiftedAudioRequest):
   validateDirectories()
 
-  wav_path = request.wav_path
+  wav_path = request.wav_path[1:]
   shift_semitones = request.shift_semitones
 
   song_filename = os.path.basename(wav_path)
@@ -131,6 +144,6 @@ async def getShiftedAudio(request: GetShiftedAudioRequest):
   pitch_shift.shiftAudio(path_off_vocal, output_path_off_vocal, shift_semitones)
 
   return {
-    ON_VOCAL_RETURN_KEY_NAME: output_path_on_vocal,
-    OFF_VOCAL_RETURN_KEY_NAME: output_path_off_vocal
+    ON_VOCAL_RETURN_KEY_NAME: "/" + output_path_on_vocal,
+    OFF_VOCAL_RETURN_KEY_NAME: "/" + output_path_off_vocal
   }
