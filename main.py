@@ -20,8 +20,8 @@ from pydantic import BaseModel
 #       -- songname_off_vocal_+2.wav
 
 class GetShiftedAudioRequest(BaseModel):
-  original_filename: str
-  shift_semitones:   int
+  wav_path: str
+  shift_semitones: int    # positive for higher pitch, negative for lower
 
 AUDIO_FILE_EXTENSION = ".wav"
 OFF_VOCAL_RETURN_KEY_NAME = "audioNvUrl"
@@ -46,7 +46,7 @@ app.add_middleware(
 
 # sketchy hardcoded function to ensure directories exist...
 def validateDirectories():
-  for path in [SHIFT_DIRECTORY, UPLOAD_ROOT_PATH, OUTPUT_ROOT_PATH]:
+  for path in [UPLOAD_ROOT_PATH, OUTPUT_ROOT_PATH]:
     createDirIfNotExists(path)
 
 def createDirIfNotExists(path):
@@ -92,41 +92,45 @@ async def getOffVocal(file: UploadFile): # assume mp3
 async def getShiftedAudio(request: GetShiftedAudioRequest):
   validateDirectories()
 
-  original_filename = request.original_filename
+  wav_path = request.wav_path
   shift_semitones = request.shift_semitones
 
-  song_name = original_filename[:len(original_filename)-4]
-  shifted_song_name = "{name}_{shift}".format(name = song_name, shift = shift_semitones)
-
+  song_filename = os.path.basename(wav_path)
+  song_name = song_filename[:len(song_filename)-4]
+  shifted_song_name_on_vocal = "{name}_{shift}".format(
+    name = song_name, shift = shift_semitones
+  )
+  shifted_song_name_off_vocal = "{name}{suffix}_{shift}".format(
+    name = song_name, suffix = OFF_VOCAL_SUFFIX, shift = shift_semitones
+  )
+  shift_directory = "{dir1}/{dir2}/{dir3}".format(
+    dir1 = OUTPUT_ROOT_PATH,
+    dir2 = song_name,
+    dir3 = SHIFT_DIRECTORY
+  )
+  createDirIfNotExists(shift_directory)
+  
   # TODO: make on and off vocal concurrent?
-  path_on_vocal = "{dir1}/{dir2}/{filename}".format(
+  # shift on-vocal
+  output_path_on_vocal = "{dir}/{filename}".format(
+    dir = shift_directory,
+    filename = shifted_song_name_on_vocal + AUDIO_FILE_EXTENSION
+  )
+  pitch_shift.shiftAudio(wav_path, output_path_on_vocal, shift_semitones)
+
+  # shift off-vocal
+  path_off_vocal = "{dir1}/{dir2}/{filename}".format(
     dir1 = OUTPUT_ROOT_PATH,
     dir2 = song_name,
     filename = song_name + AUDIO_FILE_EXTENSION
   )
-
-  output_path_on_vocal = "{dir1}/{dir2}/{dir3}/{filename}".format(
-    dir1 = OUTPUT_ROOT_PATH,
-    dir2 = song_name,
-    dir3 = SHIFT_DIRECTORY,
-    filename = shifted_song_name + AUDIO_FILE_EXTENSION
-  )
-  pitch_shift.shiftAudio(path_on_vocal, output_path_on_vocal, shift_semitones)
-
-  path_off_vocal = "{dir1}/{dir2}/{filename}".format(
-    dir1 = OUTPUT_ROOT_PATH,
-    dir2 = song_name,
-    filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
-  )
-  output_path_off_vocal = "{dir1}/{dir2}/{dir3}/{filename}".format(
-    dir1 = OUTPUT_ROOT_PATH,
-    dir2 = song_name,
-    dir3 = SHIFT_DIRECTORY,
-    filename = shifted_song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
+  output_path_off_vocal = "{dir}/{filename}".format(
+    dir = shift_directory,
+    filename = shifted_song_name_off_vocal + AUDIO_FILE_EXTENSION
   )
   pitch_shift.shiftAudio(path_off_vocal, output_path_off_vocal, shift_semitones)
 
   return {
-    ON_VOCAL_RETURN_KEY_NAME: "output_path_on_vocal",
-    OFF_VOCAL_RETURN_KEY_NAME: "output_path_off_vocal"
+    ON_VOCAL_RETURN_KEY_NAME: output_path_on_vocal,
+    OFF_VOCAL_RETURN_KEY_NAME: output_path_off_vocal
   }
