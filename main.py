@@ -135,7 +135,7 @@ async def getShiftedAudio(request: GetShiftedAudioRequest):
   path_off_vocal = "{dir1}/{dir2}/{filename}".format(
     dir1 = OUTPUT_ROOT_PATH,
     dir2 = song_name,
-    filename = song_name + AUDIO_FILE_EXTENSION
+    filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
   )
   output_path_off_vocal = "{dir}/{filename}".format(
     dir = shift_directory,
