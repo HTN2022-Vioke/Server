@@ -1,3 +1,4 @@
+from fileinput import filename
 from audio_api import get_off_vocal, pitch_shift
 from audio_api.utils import createWavFromMp3
 from fastapi import FastAPI, UploadFile
@@ -93,7 +94,14 @@ async def getOffVocal(file: UploadFile): # assume mp3
     dir = song_dir,
     filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
   )
-  get_off_vocal.createOffVocal(wav_path, filepath_off_vocal) # needs wav
+
+  if (os.path.isfile(filepath_off_vocal)):
+    return {
+      ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+      OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
+    }
+
+  get_off_vocal.createOffVocal(wav_path, filepath_off_vocal)
 
   return {
     ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
@@ -110,6 +118,15 @@ async def getShiftedAudio(request: GetShiftedAudioRequest):
 
   song_filename = os.path.basename(wav_path)
   song_name = song_filename[:len(song_filename)-4]
+
+  if (shift_semitones == 0):
+    return {
+      ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+      OFF_VOCAL_RETURN_KEY_NAME: "/" + "{dir1}/{dir2}/{filename}".format(
+        dir1 = OUTPUT_ROOT_PATH, dir2 = song_name, filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
+      )
+    }
+
   shifted_song_name_on_vocal = "{name}_{shift}".format(
     name = song_name, shift = shift_semitones
   )
@@ -124,14 +141,12 @@ async def getShiftedAudio(request: GetShiftedAudioRequest):
   createDirIfNotExists(shift_directory)
   
   # TODO: make on and off vocal concurrent?
-  # shift on-vocal
+  # on-vocal paths
   output_path_on_vocal = "{dir}/{filename}".format(
     dir = shift_directory,
     filename = shifted_song_name_on_vocal + AUDIO_FILE_EXTENSION
   )
-  pitch_shift.shiftAudio(wav_path, output_path_on_vocal, shift_semitones)
-
-  # shift off-vocal
+  # off-vocal paths
   path_off_vocal = "{dir1}/{dir2}/{filename}".format(
     dir1 = OUTPUT_ROOT_PATH,
     dir2 = song_name,
@@ -141,6 +156,14 @@ async def getShiftedAudio(request: GetShiftedAudioRequest):
     dir = shift_directory,
     filename = shifted_song_name_off_vocal + AUDIO_FILE_EXTENSION
   )
+
+  if (os.path.isfile(output_path_on_vocal)):
+    return {
+      ON_VOCAL_RETURN_KEY_NAME: "/" + output_path_on_vocal,
+      OFF_VOCAL_RETURN_KEY_NAME: "/" + output_path_off_vocal
+    }
+
+  pitch_shift.shiftAudio(wav_path, output_path_on_vocal, shift_semitones)
   pitch_shift.shiftAudio(path_off_vocal, output_path_off_vocal, shift_semitones)
 
   return {
