@@ -2,3 +2,5 @@
 *.pyc
 *.wav
 *.mp3
+/outputs
+/pretrained_models
