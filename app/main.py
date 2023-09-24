@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 
 from external import redis
-import session
+import utils.session as session
 
 # right now, we're assuming all uploads are mp3
 
@@ -46,16 +46,18 @@ protected_paths = {
 }
 
 @app.middleware("http")
-async def create_session_if_not_exist(request: Request, call_next, response: Response):
+async def create_session_if_not_exist(request: Request, call_next):
     session_jwt = request.cookies.get("session")
     if request.url.path not in protected_paths[request.method]:
         return await call_next(request)
     if session_jwt is None:
         # create new session
-        session_obj = await redis.new_session()
-        # response = await call_next(request)
-        response.set_cookie("session", session.create_jwt_token({"uuid": session_obj.uuid}))
-        await call_next(request, response)
+        session_obj = redis.new_session()
+        token = session.create_jwt_token({"uuid": session_obj.uuid})
+        request.cookies["session"] = token
+        response = await call_next(request)
+        response.set_cookie("session", token)
+        return response
     # since sessions aren't protected, we don't need to decode the jwt and authenticate the user
     return await call_next(request)
 
