@@ -1,12 +1,11 @@
-# syntax=docker/dockerfile:1
+FROM python:3.9
 
-FROM python:3.8-slim-buster
+WORKDIR /code
 
-WORKDIR /python-docker
+COPY ./requirements.txt /code/requirements.txt
 
-COPY requirements.txt requirements.txt
-RUN pip3 install -r requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-COPY . .
+COPY ./app /code/app
 
-CMD [ "python3", "-m" , "flask", "run", "--host=0.0.0.0"]
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
