@@ -1,5 +1,6 @@
 import redis
-from session import Session
+from os import getenv
+from utils.session import Session
 
 """
 session:{uuid}: {
@@ -9,7 +10,7 @@ session:{uuid}: {
 }
 """
 
-r = redis.Redis(host="localhost", port=6379, decode_responses=True)
+r = redis.Redis.from_url(getenv("REDIS_URL"))
 
 # r.hset("session:123", mapping={
 #     "lrc": "lig.lrc",
@@ -17,20 +18,19 @@ r = redis.Redis(host="localhost", port=6379, decode_responses=True)
 #     "timestamp": 1234,
 # })
 
-async def new_session(lrc = "", audio = "", timestamp = 0):
+def new_session(lrc = "", audio = "", timestamp = 0):
     session = Session(lrc=lrc, audio=audio, timestamp=timestamp)
-    await r.hset(f"session:{session.uuid}", mapping=session.get_data())
+    r.hset(f"session:{session.uuid}", mapping=session.get_data())
     return session
 
 def update_session(session: Session):
     return r.hset(f"session:{session.uuid}", mapping=session.get_data())
 
-
 def remove_session(session_uuid: str):
     return r.delete(f"session:{session_uuid}")
 
-async def get_session(session_uuid: str):
-    session_dict = await r.hgetall(f"session:{session_uuid}")
+def get_session(session_uuid: str):
+    session_dict = r.hgetall(f"session:{session_uuid}")
     return Session(
         uuid=session_dict["uuid"],
         lrc=session_dict["lrc"],
