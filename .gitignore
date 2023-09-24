@@ -3,3 +3,4 @@
 *.mp3
 /outputs
 /pretrained_models
+.env
