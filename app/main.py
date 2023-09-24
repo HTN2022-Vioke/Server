@@ -45,6 +45,8 @@ protected_paths = {
     "POST": [],
 }
 
+# `request.state` is a custom dict for storing data across middlewares and handlers
+
 @app.middleware("http")
 async def create_session_if_not_exist(request: Request, call_next):
     session_jwt = request.cookies.get("session")
@@ -54,14 +56,12 @@ async def create_session_if_not_exist(request: Request, call_next):
         # create new session
         session_obj = redis.new_session()
         token = session.create_jwt_token({"uuid": session_obj.uuid})
-        request.cookies["session"] = token
+        request.state.session_uuid = session_obj.uuid
         response = await call_next(request)
         response.set_cookie("session", token)
         return response
     # since sessions aren't protected, we don't need to decode the jwt and authenticate the user
     return await call_next(request)
-
-
 
 
 @app.get("/")
@@ -82,9 +82,8 @@ async def get_outputs(file_name: str):
 
 @app.get("/session")
 async def get_session(request: Request):
-    session_jwt = request.cookies.get("session")
-    if session_jwt is None:
-        return JSONResponse({"message": "no session"})
-    session = await redis.get_session(session.decode_jwt_token(session_jwt)["uuid"])
+    session = await redis.get_session(request.state.session_uuid)
     return JSONResponse(session.get_data())
+
+# @app.post("/session")
 

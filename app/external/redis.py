@@ -26,7 +26,6 @@ def new_session(lrc = "", audio = "", timestamp = 0):
 def update_session(session: Session):
     return r.hset(f"session:{session.uuid}", mapping=session.get_data())
 
-
 def remove_session(session_uuid: str):
     return r.delete(f"session:{session_uuid}")
 
