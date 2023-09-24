@@ -1,11 +1,12 @@
 
-# from fileinput import filename
+from fileinput import filename
 # from audio_api import get_off_vocal, pitch_shift
-# from audio_api.utils import createWavFromMp3
+from audio_api import get_off_vocal
+from audio_api.utils import createWavFromMp3
 from fastapi import FastAPI, UploadFile
 # from fastapi.middleware.cors import CORSMiddleware
-# import aiofiles
-# import os
+import aiofiles
+import os
 # from pydantic import BaseModel
 # from fastapi.staticfiles import StaticFiles
 
@@ -73,41 +74,41 @@ async def root():
 #   headers = {"Content-Length": str(os.path.getsize(path)), "Content-Type": "audio/wav"}
 #   return Response(f.read(), headers=headers)
 
-# @app.post("/get-off-vocal/")
-# async def getOffVocal(file: UploadFile): # assume mp3
-#   validateDirectories()
-#   # store mp3 file to uploads folder
-#   filename = file.filename
-#   filepath = "{dir}/{filename}".format(dir = UPLOAD_ROOT_PATH, filename = filename)
-#   async with aiofiles.open(filepath, 'wb') as out:
-#     content = await file.read()  # async read
-#     await out.write(content)  # async write
+@app.post("/get-off-vocal/")
+async def getOffVocal(file: UploadFile): # assume mp3
+  validateDirectories()
+  # store mp3 file to uploads folder
+  filename = file.filename
+  filepath = "{dir}/{filename}".format(dir = UPLOAD_ROOT_PATH, filename = filename)
+  async with aiofiles.open(filepath, 'wb') as out:
+    content = await file.read()  # async read
+    await out.write(content)  # async write
 
-#   song_name = filename[:len(filename)-4]
-#   song_dir = "{dir1}/{dir2}".format(dir1 = OUTPUT_ROOT_PATH, dir2 = song_name)
-#   createDirIfNotExists(song_dir) # TODO: handle/warn when folder exists
+  song_name = filename[:len(filename)-4]
+  song_dir = "{dir1}/{dir2}".format(dir1 = OUTPUT_ROOT_PATH, dir2 = song_name)
+  createDirIfNotExists(song_dir) # TODO: handle/warn when folder exists
   
-#   # create wav
-#   wav_path = createWavFromMp3(filename, UPLOAD_ROOT_PATH, song_dir)
+  # create wav
+  wav_path = createWavFromMp3(filename, UPLOAD_ROOT_PATH, song_dir)
 
-#   # create off vocal
-#   filepath_off_vocal = "{dir}/{filename}".format(
-#     dir = song_dir,
-#     filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
-#   )
+  # create off vocal
+  filepath_off_vocal = "{dir}/{filename}".format(
+    dir = song_dir,
+    filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
+  )
 
-#   if (os.path.isfile(filepath_off_vocal)):
-#     return {
-#       ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
-#       OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
-#     }
+  if (os.path.isfile(filepath_off_vocal)):
+    return {
+      ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+      OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
+    }
 
-#   get_off_vocal.createOffVocal(wav_path, filepath_off_vocal)
+  get_off_vocal.createOffVocal(wav_path, filepath_off_vocal)
 
-#   return {
-#     ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
-#     OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
-#   }
+  return {
+    ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+    OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
+  }
 
 
 # @app.post("/get-shifted-audio/")
