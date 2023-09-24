@@ -1,12 +1,13 @@
-from fastapi import FastAPI, UploadFile, Request, Response, HTTPException
-from fastapi.responses import FileResponse, JSONResponse
-from fastapi.middleware.cors import CORSMiddleware
-import os
-from pydantic import BaseModel
-import pitch_shift
-
 from external import redis
+from fastapi import FastAPI, UploadFile, Request, Response, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse, JSONResponse
+from pydantic import BaseModel
+import aiofiles
+import os
+import pitch_shift
 import utils.session as session
+import utils.audio_utils as audio_utils
 
 # right now, we're assuming all uploads are mp3
 
@@ -112,10 +113,10 @@ async def get_session(request: Request):
 async def get_shifted_audio(request: GetShiftedAudioRequest):
   validate_directories()
 
-  wav_path = request.wav_path[1:]
+  wav_path = request.wav_path
   shift_semitones = request.shift_semitones
 
-  if not os.path.exists(wav_path):
+  if not os.path.isfile(wav_path):
       raise HTTPException( \
           status_code=400, \
           detail="Song {name} does not exist in uploads".format(name = wav_path))
@@ -173,4 +174,41 @@ async def get_shifted_audio(request: GetShiftedAudioRequest):
   return {
     ON_VOCAL_RETURN_KEY_NAME: "/" + output_path_on_vocal,
     OFF_VOCAL_RETURN_KEY_NAME: "/" + output_path_off_vocal
+  }
+
+#TODO: make "upload audio file" into a separate function
+
+@app.post("/get-off-vocal/")
+async def getOffVocal(file: UploadFile): # assume mp3, TODO: convert any kind to wav here
+  validate_directories()
+  # store audio file to uploads folder
+  filename = file.filename
+  filepath = "{dir}/{filename}".format(dir = UPLOAD_ROOT_PATH, filename = filename)
+  async with aiofiles.open(filepath, 'wb') as out:
+    content = await file.read()  # async read
+    await out.write(content)  # async write
+
+  song_name = filename[:len(filename)-4]
+  song_dir = "{dir1}/{dir2}".format(dir1 = OUTPUT_ROOT_PATH, dir2 = song_name)
+  create_dir_if_not_exists(song_dir) # TODO: handle/warn when folder exists
+  
+  # create wav
+  wav_path = audio_utils.createWavFromMp3(filename, UPLOAD_ROOT_PATH, song_dir)
+
+  # create off vocal
+  filepath_off_vocal = "{dir}/{filename}".format(
+    dir = song_dir,
+    filename = song_name + OFF_VOCAL_SUFFIX + AUDIO_FILE_EXTENSION
+  )
+
+  if not os.path.isfile(filepath_off_vocal):
+    #get_off_vocal.createOffVocal(wav_path, filepath_off_vocal) # TODO: replace below with this
+    return {
+        ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+        OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
+    }
+
+  return {
+    ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
+    OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
   }
