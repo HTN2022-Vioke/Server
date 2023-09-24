@@ -1,5 +1,4 @@
 fastapi==0.103.1
 pydantic==2.3.0
 uvicorn==0.23.2
-scipy==1.11.2
-spleeter==2.3.0
+spleeter==2.4.0

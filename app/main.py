@@ -1,14 +1,14 @@
 
 from fileinput import filename
-# from audio_api import get_off_vocal, pitch_shift
+from audio_api import get_off_vocal, pitch_shift
 from audio_api import get_off_vocal
 from audio_api.utils import createWavFromMp3
 from fastapi import FastAPI, UploadFile
-# from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.cors import CORSMiddleware
 import aiofiles
 import os
-# from pydantic import BaseModel
-# from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from fastapi.staticfiles import StaticFiles
 
 # right now, we're assuming all uploads are mp3
 

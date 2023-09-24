@@ -2,4 +2,4 @@
 *.wav
 *.mp3
 /outputs
-/pretrained_models
+/app/pretrained_models

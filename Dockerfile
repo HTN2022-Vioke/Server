@@ -1,12 +1,12 @@
-FROM python:3.9
+FROM python:3.9-alpine3.17
 
-WORKDIR /code
+COPY ./requirements.txt requirements.txt
 
-COPY ./requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+RUN apt-get -y update && apt-get -y upgrade && apt-get install -y --no-install-recommends ffmpeg
 
-RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
-RUN apk add  --no-cache ffmpeg
+COPY ./app /app
+COPY ./assets /assets
 
-COPY ./app /code/app
-
+WORKDIR /app
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
