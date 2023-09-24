@@ -7,5 +7,7 @@ services:
       DEBUG: 1
     volumes:
       - ./app:/code/app
+    env_file:
+      - .env
   redis:
     image: "redis:alpine"
