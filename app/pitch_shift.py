@@ -1,5 +1,5 @@
 import datetime # for test code only
-from audio_api.utils import writeWaveformArrToWav
+import utils
 import pyrubberband as pyrb
 import soundfile as sf
 
@@ -7,7 +7,7 @@ import soundfile as sf
 def shiftAudio(filepath, output_path, shift_semitones):
   data, sample_rate = sf.read(filepath)
   data_shift = pyrb.pitch_shift(data, sample_rate, shift_semitones)
-  writeWaveformArrToWav(data_shift, output_path, sample_rate)
+  utils.writeWaveformArrToWav(data_shift, output_path, sample_rate)
 
 # test code
 # start = datetime.datetime.now()
