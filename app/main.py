@@ -8,6 +8,7 @@ import os
 import pitch_shift
 import utils.session as session
 import utils.audio_utils as audio_utils
+import get_off_vocal
 
 # right now, we're assuming all uploads are mp3
 
@@ -202,11 +203,7 @@ async def getOffVocal(file: UploadFile): # assume mp3, TODO: convert any kind to
   )
 
   if not os.path.isfile(filepath_off_vocal):
-    #get_off_vocal.createOffVocal(wav_path, filepath_off_vocal) # TODO: replace below with this
-    return {
-        ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,
-        OFF_VOCAL_RETURN_KEY_NAME: "/" + filepath_off_vocal
-    }
+    get_off_vocal.createOffVocal(wav_path, filepath_off_vocal)
 
   return {
     ON_VOCAL_RETURN_KEY_NAME: "/" + wav_path,

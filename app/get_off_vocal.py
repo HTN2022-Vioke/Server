@@ -1,5 +1,7 @@
-# import datetime # for test code only
-# import utils
+#temp
+import shutil
+import os
+
 # from pydub import AudioSegment
 # from pydub.utils import make_chunks
 # from spleeter.audio.adapter import AudioAdapter
@@ -55,3 +57,7 @@
 # createOffVocal("syl.wav", "syl_off_vocal.wav")
 # end = datetime.datetime.now()
 # print("duration: " + str(end-start))
+
+def createOffVocal(filepath, output_path): # must be wav
+  shutil.copy(filepath, output_path)
+  
