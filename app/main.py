@@ -3,10 +3,12 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
 from pydantic import BaseModel
+from utils.clocker import Clocker
+from utils.utils import create_jwt_token, decode_jwt_token
 
-
-from external import redis
-import utils.session as session
+from external import redis as redis_connector
+from db_models import SessionPayload
+from models import Session as SessionModel
 
 # right now, we're assuming all uploads are mp3
 
@@ -24,14 +26,14 @@ import utils.session as session
 
 app = FastAPI()
 
-origins = ["*"]
+origins = ["http://localhost:3000"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_methods=["GET", 'POST', 'PATCH', 'DELETE'],
+    expose_headers=["Set-Cookie"],
 )
 
 def create_dir_if_not_exists(path):
@@ -48,21 +50,15 @@ protected_paths = {
 # `request.state` is a custom dict for storing data across middlewares and handlers
 
 @app.middleware("http")
-async def create_session_if_not_exist(request: Request, call_next):
+async def parse_session(request: Request, call_next):
+    print(request.url)
+    request.state.session_uuid = None
     session_jwt = request.cookies.get("session")
-    if request.url.path not in protected_paths[request.method]:
-        return await call_next(request)
-    if session_jwt is None:
-        # create new session
-        session_obj = redis.new_session()
-        token = session.create_jwt_token({"uuid": session_obj.uuid})
-        request.state.session_uuid = session_obj.uuid
-        response = await call_next(request)
-        response.set_cookie("session", token)
-        return response
-    # since sessions aren't protected, we don't need to decode the jwt and authenticate the user
+    if session_jwt is not None:
+        session = decode_jwt_token(session_jwt)
+        request.state.session_uuid = session.uuid
+    print(request.state.session_uuid, session_jwt, request.cookies, request)
     return await call_next(request)
-
 
 @app.get("/")
 async def root():
@@ -82,8 +78,46 @@ async def get_outputs(file_name: str):
 
 @app.get("/session")
 async def get_session(request: Request):
-    session = await redis.get_session(request.state.session_uuid)
-    return JSONResponse(session.get_data())
+    print(request.state.session_uuid)
+    if request.state.session_uuid is None:
+        return JSONResponse({"message": "session does not exist"}, status_code=404)
+    session = redis_connector.get_session(request.state.session_uuid)
+    return JSONResponse(session.to_dict())
 
-# @app.post("/session")
+@app.post("/session")
+async def create_session(request: Request, response: Response):
+    if request.state.session_uuid is not None:
+        return JSONResponse({"message": "session already exists"})
+    session = redis_connector.new_session()
+    token = create_jwt_token(SessionPayload(uuid=session.uuid))
+    response.set_cookie(
+        key="session", 
+        value=token,
+        expires=Clocker().add_time("7d").time,
+        # httponly=True,
+        samesite="none",
+        secure=True,
+    )
+    return session.to_dict()
 
+@app.patch("/session")
+async def update_session(request: Request, session: SessionModel):
+    if request.state.session_uuid is None:
+        return JSONResponse({"message": "session does not exist"})
+    redis_connector.upsert_session(session)
+    return JSONResponse({"message": "session updated"})
+
+@app.post("/get-off-vocal")
+async def get_off_vocal(request: Request):
+    # generate files
+    # ...
+
+    files = {
+        "audioUrl": "lig.mp3",
+        "audioNvUrl": "lig-nv.wav",
+    }
+    # add to session data
+    request.state.session_uuid
+
+
+    return files
