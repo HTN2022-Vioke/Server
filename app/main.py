@@ -97,18 +97,27 @@ async def upload_vocal(request: Request):
     # ...
     return JSONResponse({"message": "success"})
 
+
+@app.post("/upload-lrc")
+async def upload_vocal(request: Request):
+    # save current file
+    # ...
+    return JSONResponse({"message": "success"})
+
 @app.post("/get-audio-file")
 async def get_audio_file(request: Request, file_requests: List[GetAudioFileModel]):
     # generate files based on the saved original file
     # ...
     
     # add condition for key shifted files
+    # file.name = name of original file
+    
     response = []
     for file in file_requests:
         if file.has_vocal:
             response.append({
                 "name": file.name,
-                "url": "lig.mp3",
+                "url": "lig.mp3", # file.name
                 "hasVocal": True,
                 "curKeyShift": file.cur_key_shift
             })
