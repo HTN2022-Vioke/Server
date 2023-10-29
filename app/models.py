@@ -11,6 +11,6 @@ class Audio(BaseModel):
 class Session(BaseModel):
     uuid: str
     audio: Audio
-    timestamp: int
+    timestamp: float
     cur_key_shift: int
     has_vocal: bool

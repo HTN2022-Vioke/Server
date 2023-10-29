@@ -117,7 +117,9 @@ async def get_off_vocal(request: Request):
         "audioNvUrl": "lig-nv.wav",
     }
     # add to session data
-    request.state.session_uuid
+    # redis_connector.upsert_session(session)
+    # redis_connector.get_session(request.state.session_uuid)
+    # request.state.session_uuid
 
 
     return files
