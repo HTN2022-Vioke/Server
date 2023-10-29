@@ -17,14 +17,10 @@ class Audio:
         name: Union[None, str] = None,
         uuid = uuid4().hex,
         lrc_file: Union[None, str] = None,
-        vocal_file: Union[None, str] = None,
-        off_vocal_file: Union[None, str] = None,
     ):
         self.uuid = uuid
         self.name = name
         self.lrc_file = lrc_file
-        self.vocal_file = vocal_file
-        self.off_vocal_file = off_vocal_file
 
     @classmethod
     def from_dict(
@@ -34,8 +30,6 @@ class Audio:
         return cls(
             uuid = dict.get("uuid", None),
             lrc_file = dict.get("lrcFile", None),
-            vocal_file = dict.get("vocalFile", None),
-            off_vocal_file = dict.get("offVocalFile", None),
             name = dict.get("name", None)
         )
 
@@ -44,8 +38,6 @@ class Audio:
             "uuid": self.uuid,
             "name": self.name,
             "lrcFile": self.lrc_file,
-            "vocalFile": self.vocal_file,
-            "offVocalFile": self.off_vocal_file,
         }
 
 class Session:

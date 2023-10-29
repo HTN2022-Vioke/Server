@@ -43,8 +43,6 @@ def upsert_session(session: SessionModel):
     r.hset(f"audio:{session.audio.uuid}", mapping={
         "name": session.audio.name if session.audio.name is not None else 'null',
         "lrcFile": session.audio.lrc_file if session.audio.lrc_file is not None else 'null',
-        "vocalFile": session.audio.vocal_file if session.audio.vocal_file is not None else 'null',
-        "offVocalFile": session.audio.off_vocal_file if session.audio.off_vocal_file is not None else 'null',
     })
     print(session.audio)
     print(session)

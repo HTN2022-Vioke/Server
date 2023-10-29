@@ -1,3 +1,4 @@
+from typing import List
 from fastapi import FastAPI, UploadFile, Request, Response
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -8,7 +9,7 @@ from utils.utils import create_jwt_token, decode_jwt_token
 
 from external import redis as redis_connector
 from db_models import SessionPayload
-from models import Session as SessionModel
+from models import Session as SessionModel, GetAudioFile as GetAudioFileModel
 
 # right now, we're assuming all uploads are mp3
 
@@ -107,19 +108,35 @@ async def update_session(request: Request, session: SessionModel):
     redis_connector.upsert_session(session)
     return JSONResponse({"message": "session updated"})
 
-@app.post("/get-off-vocal")
-async def get_off_vocal(request: Request):
-    # generate files
+
+@app.post("/upload-vocal")
+async def upload_vocal(request: Request):
+    # save current file
     # ...
+    return JSONResponse({"message": "success"})
 
-    files = {
-        "audioUrl": "lig.mp3",
-        "audioNvUrl": "lig-nv.wav",
-    }
-    # add to session data
-    # redis_connector.upsert_session(session)
-    # redis_connector.get_session(request.state.session_uuid)
-    # request.state.session_uuid
+@app.post("/get-audio-file")
+async def get_off_vocal(request: Request, file_requests: List[GetAudioFileModel]):
+    # generate files based on the saved original file
+    # ...
+    
+    # add condition for key shifted files
+    response = []
+    for file in file_requests:
+        if file.has_vocal:
+            response.append({
+                "name": file.name,
+                "url": "lig.mp3",
+                "hasVocal": True,
+                "curKeyShift": file.cur_key_shift
+            })
+        else:
+            response.append({
+                "name": file.name,
+                "url": "lig-nv.wav",
+                "hasVocal": False,
+                "curKeyShift": file.cur_key_shift
+            })
+    return JSONResponse(response)
 
 
-    return files
