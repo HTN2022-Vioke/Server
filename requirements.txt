@@ -7,3 +7,5 @@ scipy==1.10.1
 uvicorn==0.23.2
 soundfile~=0.11.0
 audio-separator>=0.8.0
+python-jose==3.3.0
+pydantic==2.3.0
