@@ -1,7 +1,33 @@
 #temp
 import shutil
-import os
+import shlex
+# import os
 
+# def createOffVocal(filepath, output_path): # must be wav
+#   shutil.copy(filepath, output_path)
+
+#TODO: convert everything to mp3
+# TODO: change it to use Demucs api after their 4.1.0 is released
+# import demucs.api 
+
+import subprocess
+
+def createOffVocal(filepath, output_path): # must be wav
+  subprocess.run(['python3', '-m', 'demucs', '-n', 'mdx_extra_q', '-d', 'cpu', filepath])
+
+  # separator = demucs.api.Separator(model="mdx_extra")
+  # _, separated = separator.separate_audio_file(filepath)
+  # for file, sources in separated:
+  #   demucs.api.save_audio(sources["vocals"], f"{output_path}_{file}", samplerate=separator.samplerate)
+  
+  # for file, sources in separated:
+  #   for stem, source in sources.items():
+  #     demucs.api.save_audio(source, f"{stem}_{file}", samplerate=separator.samplerate)
+
+  # demucs.separate.main(["--two-stems", "vocals", "-n", "mdx_extra", "--wav", filepath])
+  shutil.copy(filepath, output_path)
+
+        
 # from pydub import AudioSegment
 # from pydub.utils import make_chunks
 # from spleeter.audio.adapter import AudioAdapter
@@ -58,6 +84,5 @@ import os
 # end = datetime.datetime.now()
 # print("duration: " + str(end-start))
 
-def createOffVocal(filepath, output_path): # must be wav
-  shutil.copy(filepath, output_path)
+
   
