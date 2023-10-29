@@ -1,11 +1,12 @@
 aiofiles==23.2.1
+audio-separator>=0.8.0
 fastapi==0.103.1
+pydantic==2.3.0
 pydub==0.25.1
 pyrubberband==0.3.0
+python-jose==3.3.0
+python-multipart==0.0.6
 redis[hiredis]==5.0.0
 scipy==1.10.1
-uvicorn==0.23.2
 soundfile~=0.11.0
-audio-separator>=0.8.0
-python-jose==3.3.0
-pydantic==2.3.0
+uvicorn==0.23.2
