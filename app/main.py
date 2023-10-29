@@ -5,7 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import os
 from pydantic import BaseModel
 from utils.clocker import Clocker
-from utils.audio_utils import create_jwt_token, decode_jwt_token
+from utils.auth import create_jwt_token, decode_jwt_token
 
 from external import redis as redis_connector
 from db_models import SessionPayload
