@@ -12,6 +12,7 @@ import wave
 SLICE_SIZE_MS = 15 * 1000
 TEMP_DIRECTORY = "temp" # make sure the temp folder exists
 MODEL_NAME = "UVR_MDXNET_KARA_2"
+NUM_THREADS = 8
 
 def createOffVocal(filepath, output_path): # must be wav
   f = sf.SoundFile(filepath)
@@ -20,8 +21,11 @@ def createOffVocal(filepath, output_path): # must be wav
   audio = AudioSegment.from_file(filepath , "wav")
   chunks = make_chunks(audio, SLICE_SIZE_MS)
 
-  in_files = joblib.Parallel(n_jobs=8)(\
-    joblib.delayed(processChunk)(i, chunk) for i, chunk in enumerate(chunks))
+  in_files = list()
+  
+  with joblib.parallel_backend("loky", inner_max_num_threads=NUM_THREADS):
+    in_files = joblib.Parallel(n_jobs=NUM_THREADS)(\
+      joblib.delayed(processChunk)(i, chunk) for i, chunk in enumerate(chunks))
   
   data= []
   for in_file in in_files:
@@ -50,9 +54,10 @@ def processChunk(idx, chunk): # has to be wav
 
 # test code
 start = datetime.datetime.now()
+song = "lig"
 # convert to wav
-sound = AudioSegment.from_mp3("hc.mp3")
-sound.export("hc.wav", format="wav")
-createOffVocal("hc.wav", "hc_off_vocal.wav")
+sound = AudioSegment.from_mp3("{song}.mp3".format(song=song))
+sound.export("{song}.wav".format(song=song), format="wav")
+createOffVocal("{song}.wav".format(song=song), "{song}_off_vocal.wav".format(song=song))
 end = datetime.datetime.now()
 print("duration: " + str(end-start))
