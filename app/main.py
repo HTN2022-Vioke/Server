@@ -1,11 +1,11 @@
 from db_models import SessionPayload
 from external import redis as redis_connector
-from fastapi import FastAPI, UploadFile, Request, Response
+from fastapi import FastAPI, UploadFile, Request, Response, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from models import Session as SessionModel, GetAudioFile as GetAudioFileModel
 from pydantic import BaseModel
-from typing import List
+from typing import Annotated, List
 from utils.auth import create_jwt_token, decode_jwt_token
 from utils.clocker import Clocker
 import os
@@ -58,9 +58,9 @@ async def parse_session(request: Request, call_next):
 async def root():
     return {"message": "homeasfasfasdf"}
 
-@app.get("/files/{file_name}")
-async def get_outputs(file_name: str):
-    path = f"{FILES_ROOT_PATH}/{file_name}"
+@app.get("/files/{name}/{file_name}")
+async def get_outputs(name: str, file_name: str):
+    path = f"{FILES_ROOT_PATH}/{name}/{file_name}"
     # TODO: need to sanitize path later to prevent os path injection os they don't steal all the os system secrets
     return FileResponse(
         path,
@@ -103,9 +103,12 @@ async def update_session(request: Request, session: SessionModel):
 
 
 @app.post("/upload-vocal")
-async def upload_vocal(file: UploadFile):
+async def upload_vocal(
+    file: Annotated[UploadFile, File()],
+    name: Annotated[str, Form()]
+):
     filename = file.filename
-    song_name = filename[:len(filename)-4] # TODO: get this from frontend
+    song_name = name
     song_dir = f"{FILES_ROOT_PATH}/{song_name}"
     createDirIfNotExists(song_dir) # TODO: handle/warn when folder exists
     
@@ -115,26 +118,25 @@ async def upload_vocal(file: UploadFile):
         await out.write(content)  # async write
     
     _, file_extension = os.path.splitext(filename)
-    song_path_wav = "{song_dir}/{filename}".format(
-        dir = song_dir,
-        filename = song_name + OFF_VOCAL_SUFFIX + ".wav"
-    )
+    song_path_wav = f"{song_dir}/{song_name + '.wav'}"
     if (file_extension != "wav"):
-        audio_utils.createWavFromMp3(song_path_original, song_dir)
+        audio_utils.createWavFromMp3(song_name, song_path_original, song_dir)
 
     return JSONResponse({"message": "success", "url": song_path_wav})
 
 
 @app.post("/upload-lrc")
-async def upload_vocal(file: UploadFile):
-    song = "lig"
+async def upload_vocal(
+    file: Annotated[UploadFile, File()],
+    name: Annotated[str, Form()]
+):
     filename = file.filename
-    path = "{upload}/{song}/{filename}".format(upload = FILES_ROOT_PATH, song = song, filename = filename)
+    path = f"{FILES_ROOT_PATH}/{name}/{filename}"
     async with aiofiles.open(path, 'wb') as out:
         content = await file.read()  # async read
         await out.write(content)  # async write
         
-    return JSONResponse({"message": "success", "url": path})
+    return JSONResponse({"message": "success", "url": f"{name}/{filename}"})
 
 @app.post("/get-audio-file")
 async def get_audio_file(request: Request, file_requests: List[GetAudioFileModel]):
@@ -149,14 +151,14 @@ async def get_audio_file(request: Request, file_requests: List[GetAudioFileModel
         if file.has_vocal:
             response.append({
                 "name": file.name,
-                "url": "lig.mp3", # file.name
+                "url": f"{file.name}/lig.wav", # file.name
                 "hasVocal": True,
                 "curKeyShift": file.cur_key_shift
             })
         else:
             response.append({
                 "name": file.name,
-                "url": "lig-nv.wav",
+                "url": f"{file.name}/lig_off_vocal.wav",
                 "hasVocal": False,
                 "curKeyShift": file.cur_key_shift
             })
