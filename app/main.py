@@ -20,9 +20,9 @@ def createDirIfNotExists(path):
   if not os.path.exists(path):
     os.makedirs(path)
 
-def getLocalPath(song_name, has_vocal=False, key_shift=0, include_root_path=True):
+def getLocalPath(song_name, has_vocal=True, key_shift=0, include_root_path=True):
     path = f"{FILES_ROOT_PATH}/{song_name}/{song_name}" if include_root_path else f"{song_name}/{song_name}"
-    if has_vocal:
+    if not has_vocal:
         path += OFF_VOCAL_SUFFIX
     if key_shift != 0:
         path += "_" + ("+" if (key_shift>0) else "-") + str(abs(key_shift))
