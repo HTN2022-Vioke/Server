@@ -25,7 +25,7 @@ def getLocalPath(song_name, has_vocal=False, key_shift=0, include_root_path=True
     if has_vocal:
         path += OFF_VOCAL_SUFFIX
     if key_shift != 0:
-        path += "_" + ("+" if (key_shift>0) else "-") + abs(key_shift)
+        path += "_" + ("+" if (key_shift>0) else "-") + str(abs(key_shift))
     path += ".wav"
     return path
 
