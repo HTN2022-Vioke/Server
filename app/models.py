@@ -10,10 +10,10 @@ class Session(BaseModel):
     uuid: str
     audio: Audio
     timestamp: float
-    cur_key_shift: int
+    key_shift: int
     has_vocal: bool
 
 class GetAudioFile(BaseModel):
     name: str
     has_vocal: bool
-    cur_key_shift: int
+    key_shift: int

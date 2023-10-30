@@ -6,7 +6,7 @@ from models import Session as SessionModel
 """
 session:{uuid}: {
     audioUuid: string
-    curKeyShift: int
+    keyShift: int
     hasVocal: bool
     timestamp: int
 }
@@ -35,7 +35,7 @@ def new_session():
 def upsert_session(session: SessionModel):
     r.hset(f"session:{session.uuid}", mapping={
         "audioUuid": session.audio.uuid if session.audio.uuid is not None else 'null',
-        "curKeyShift": session.cur_key_shift if session.cur_key_shift is not None else 'null',
+        "keyShift": session.key_shift if session.key_shift is not None else 'null',
         "hasVocal": str(session.has_vocal) if session.has_vocal is not None else 'null',
         "timestamp": session.timestamp if session.timestamp is not None else 'null',
     })

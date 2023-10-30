@@ -13,13 +13,23 @@ import utils.audio as audio_utils
 import aiofiles
 import shutil
 
+
 FILES_ROOT_PATH = "files"
 OFF_VOCAL_SUFFIX = "_off_vocal"
 
 def createDirIfNotExists(path):
   if not os.path.exists(path):
     os.makedirs(path)
-    
+
+def getLocalPath(song_name, has_vocal=False, key_shift=0):
+    path = f"{FILES_ROOT_PATH}/{song_name}"
+    if has_vocal:
+        path += OFF_VOCAL_SUFFIX
+    if key_shift != 0:
+        path += "_" + ("+" if (key_shift>0) else "-") + abs(key_shift)
+    path += ".wav"
+    return path
+
 createDirIfNotExists(FILES_ROOT_PATH)
 
 app = FastAPI()
@@ -138,26 +148,22 @@ async def upload_vocal(file: UploadFile):
 
 @app.post("/get-audio-file")
 async def get_audio_file(request: Request, file_requests: List[GetAudioFileModel]):
-    # generate files based on the saved original file
-    # ...
-    
-    # add condition for key shifted files
-    # file.name = name of original file
-    
     response = []
     for file in file_requests:
-        if file.has_vocal:
-            response.append({
-                "name": file.name,
-                "url": "lig.mp3", # file.name
-                "hasVocal": True,
-                "curKeyShift": file.cur_key_shift
-            })
-        else:
-            response.append({
-                "name": file.name,
-                "url": "lig-nv.wav",
-                "hasVocal": False,
-                "curKeyShift": file.cur_key_shift
-            })
+        target_path = getLocalPath(file.name, file.has_vocal, file.key_shift)
+        # generate off vocal if needed
+        if (not file.has_vocal) and (not os.path.isfile(target_path)):
+            audio_utils.createOffVocal(getLocalPath(file.name), getLocalPath(file.name, False))
+        
+        # generate key shift if needed
+        if (file.key_shift != 0) and (not os.path.isfile(target_path)):
+            audio_utils.shift_audio(getLocalPath(file.name, file.has_vocal), target_path, file.key_shift)
+        
+        response.append({
+            "name": file.name,
+            "url": target_path,
+            "hasVocal": True if file.has_vocal else False,
+            "keyShift": file.key_shift
+        })
+        
     return JSONResponse(response)
