@@ -1,9 +1,7 @@
 from pydub import AudioSegment
 
-def createWavFromMp3(filename, file_directory, output_directory): # will be outputted to the same directory as the original
-  assert(len(filename) > 3)
-  sound = AudioSegment.from_mp3("{dir}/{filename}".format(dir = file_directory, filename = filename))
-  filename_wav = filename[:len(filename)-3] + "wav"
-  filepath_wav = "{dir}/{filename}".format(dir = output_directory, filename = filename_wav)
+def createWavFromMp3(song_name, mp3_path, output_directory): # will be outputted to the same directory as the original
+  sound = AudioSegment.from_mp3(mp3_path)
+  filepath_wav = f"{output_directory}/{song_name}" + "wav"
   sound.export(filepath_wav, format="wav")
   return filepath_wav

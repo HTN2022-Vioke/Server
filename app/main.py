@@ -105,25 +105,24 @@ async def update_session(request: Request, session: SessionModel):
 @app.post("/upload-vocal")
 async def upload_vocal(file: UploadFile):
     filename = file.filename
-    song_file_path_upload = "{dir}/{filename}".format(dir = FILES_ROOT_PATH, filename = filename)
-    async with aiofiles.open(song_file_path_upload, 'wb') as out:
+    song_name = filename[:len(filename)-4] # TODO: get this from frontend
+    song_dir = f"{FILES_ROOT_PATH}/{song_name}"
+    createDirIfNotExists(song_dir) # TODO: handle/warn when folder exists
+    
+    song_path_original = f"{FILES_ROOT_PATH}/{song_name}/{filename}"
+    async with aiofiles.open(song_path_original, 'wb') as out:
         content = await file.read()  # async read
         await out.write(content)  # async write
     
-    song_name = filename[:len(filename)-4]
-    song_dir_path_output = "{dir1}/{dir2}".format(dir1 = FILES_ROOT_PATH, dir2 = song_name)
-    createDirIfNotExists(song_dir_path_output) # TODO: handle/warn when folder exists
-    song_file_path_output = "{dir}/{filename}".format(
-        dir = song_dir_path_output,
+    _, file_extension = os.path.splitext(filename)
+    song_path_wav = "{song_dir}/{filename}".format(
+        dir = song_dir,
         filename = song_name + OFF_VOCAL_SUFFIX + ".wav"
     )
-    _, file_extension = os.path.splitext(filename)
-    if (file_extension == "wav"):
-        shutil.copyfile(song_file_path_upload, song_file_path_output)
-    else:
-        audio_utils.createWavFromMp3(filename, FILES_ROOT_PATH, song_dir_path_output)
+    if (file_extension != "wav"):
+        audio_utils.createWavFromMp3(song_path_original, song_dir)
 
-    return JSONResponse({"message": "success"})
+    return JSONResponse({"message": "success", "url": song_path_wav})
 
 
 @app.post("/upload-lrc")
