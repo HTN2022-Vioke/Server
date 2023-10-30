@@ -13,7 +13,6 @@ import utils.audio as audio_utils
 import aiofiles
 import shutil
 
-
 FILES_ROOT_PATH = "files"
 OFF_VOCAL_SUFFIX = "_off_vocal"
 
@@ -21,9 +20,9 @@ def createDirIfNotExists(path):
   if not os.path.exists(path):
     os.makedirs(path)
 
-def getLocalPath(song_name, has_vocal=True, key_shift=0):
-    path = f"{FILES_ROOT_PATH}/{song_name}/{song_name}"
-    if not has_vocal:
+def getLocalPath(song_name, has_vocal=False, key_shift=0, include_root_path=True):
+    path = f"{FILES_ROOT_PATH}/{song_name}/{song_name}" if include_root_path else f"{song_name}/{song_name}"
+    if has_vocal:
         path += OFF_VOCAL_SUFFIX
     if key_shift != 0:
         path += "_" + ("+" if (key_shift>0) else "-") + abs(key_shift)
@@ -163,7 +162,7 @@ async def get_audio_file(request: Request, file_requests: List[GetAudioFileModel
         
         response.append({
             "name": file.name,
-            "url": target_path[6:],
+            "url": getLocalPath(file.name, file.has_vocal, file.key_shift, include_root_path=False),
             "hasVocal": True if file.has_vocal else False,
             "keyShift": file.key_shift
         })
