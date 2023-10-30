@@ -116,7 +116,7 @@ async def upload_vocal(
     file: Annotated[UploadFile, File()],
     name: Annotated[str, Form()]
 ):
-    filename = file.filename
+    filename = file.filename.replace(" ", "_")
     song_name = name
     song_dir = f"{FILES_ROOT_PATH}/{song_name}"
     createDirIfNotExists(song_dir) # TODO: handle/warn when folder exists
@@ -139,7 +139,7 @@ async def upload_vocal(
     file: Annotated[UploadFile, File()],
     name: Annotated[str, Form()]
 ):
-    filename = file.filename
+    filename = file.filename.replace(" ", "_")
     path = f"{FILES_ROOT_PATH}/{name}/{filename}"
     async with aiofiles.open(path, 'wb') as out:
         content = await file.read()  # async read
